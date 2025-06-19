@@ -10,6 +10,11 @@ struct goof{
     char* descriptor;
 };
 
+struct node{
+    int a;
+    struct node *next;
+};
+
 void init_goof(goof &g, char* descriptor){
     g.descriptor = descriptor;
 }
@@ -32,6 +37,30 @@ int main() {
 
     
     println( (ptr + SAFE_PTR_ADD(1232))->descriptor);
+
+
+    int* iptr0;
+
+    gc.gc_allocate(&iptr0, 10000);
+
+    char* cptr;
+    for(int i = 0; i < 4000; i++){
+        gc.gc_allocate(&cptr, 100);
+    }
+
+    node* root;
+    gc.gc_allocate(&root, 1);
+    root->a = 11;
+
+
+    node* traverse = root;
+    node* tmp;
+
+    for(int i = 0; i < 202439; i++){
+        gc.gc_allocate(&tmp,1);
+        traverse->next = tmp;
+        traverse = traverse->next;
+    }
 
 
     println(gc.gc_run());

@@ -4,9 +4,14 @@ void Gc::mark(heap_chunk *chnk) { chnk->flags |= (0x1 << FLAG_MARK_BIT_INDEX); }
 
 int Gc::is_marked(heap_chunk *chnk) { return (chnk->flags >> FLAG_MARK_BIT_INDEX) & 0x1; }
 
-heap_chunk* Gc::data_to_heap_chunk_addr(char *data_addr) {
-    heap_chunk *tmp = (heap_chunk *)data_addr;
-    return tmp - 1;
+heap_chunk *Gc::data_to_heap_chunk_addr(char *data_addr) {
+    void *pot_ptr = *((void **)data_addr);
+    if (pot_ptr == nullptr)
+        return nullptr;
+
+    heap_chunk *pot_chunk = (heap_chunk *)pot_ptr;
+
+    return pot_chunk - 1;
 }
 
 bool Gc::is_stack_reachable(heap_chunk *chnk) {
@@ -27,6 +32,7 @@ std::vector<heap_chunk *> Gc::get_stack_reachable() {
     while (start < end) {
         chnk = *start;
         if (is_stack_reachable(chnk)) {
+            mark(chnk);
             stack_reachable.push_back(chnk);
         }
         start++;
@@ -44,13 +50,15 @@ int Gc::mark_from_chunk(heap_chunk *chunk, std::vector<heap_chunk *> &reach_able
     heap_chunk *pot_heap_chunk;
     while (seg < last_seg_sentinel) {
         pot_heap_chunk = data_to_heap_chunk_addr(seg);
+        seg += seg_size;
+        if (pot_heap_chunk == nullptr)
+            continue;
+
         auto it = alloc_set.find(pot_heap_chunk);
         if (it != alloc_set.end() && !is_marked(*it)) {
             mark(*it);
             reach_able.push_back(*it);
         }
-
-        seg += seg_size;
     }
 
     return 0;
@@ -65,8 +73,8 @@ int Gc::mark_phase() {
         chunk = reachable[size - 1];
         reachable.pop_back();
 
-        if (!is_marked(chunk))
-            mark_from_chunk(chunk, reachable);
+        // mark(chunk);
+        mark_from_chunk(chunk, reachable);
     }
 
     return 0;
@@ -95,6 +103,44 @@ int Gc::internal_allocate(char **stack_addr, size_t bytes) {
     return 0;
 }
 
+int Gc::sweep(){
+
+    auto it = this->alloc_vector.begin();
+
+    heap_chunk* chunk;
+    while(it < this->alloc_vector.end()){
+        chunk = *it;
+
+        if(!this->is_marked(chunk)){
+            it = this->alloc_vector.erase(it);
+            this->allocator.deallocate(reinterpret_cast<char**>(&chunk));
+            this->alloc_count--;
+            continue;
+        } 
+
+        it++;
+    }
+
+    return 0;
+}
+
+
+
 Gc::Gc() : alloc_count(0) {}
 
-int Gc::gc_run() { return mark_phase(); }
+Gc::~Gc(){};
+
+int Gc::gc_run() { 
+    if(mark_phase() != 0) return GC_MARKPHASE_FAIL;
+    if(sweep() != 0) return GC_SWEEP_FAIL; 
+
+    return 0;
+};
+
+
+/*___________________________________________________DEBUG METHODS___________________________________ */
+
+
+#ifdef DEBUG
+    std::vector<heap_chunk *> Gc::getAllocVector() { return this->alloc_vector; }
+#endif
