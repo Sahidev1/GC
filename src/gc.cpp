@@ -1,6 +1,7 @@
 #include "gc.h"
 
 void Gc::mark(heap_chunk *chnk) { chnk->flags |= (0x1 << FLAG_MARK_BIT_INDEX); }
+void Gc::unmark(heap_chunk *chnk) { chnk->flags &= ~(0x1 << FLAG_MARK_BIT_INDEX); }
 
 int Gc::is_marked(heap_chunk *chnk) { return (chnk->flags >> FLAG_MARK_BIT_INDEX) & 0x1; }
 
@@ -22,6 +23,7 @@ bool Gc::is_stack_reachable(heap_chunk *chnk) {
     return stack_ptr - sizeof(heap_chunk) == chunk_ptr;
 }
 
+// complexity time: O(n), memory; O(m)
 std::vector<heap_chunk *> Gc::get_stack_reachable() {
     auto start = alloc_vector.begin();
     auto end = alloc_vector.end();
@@ -41,6 +43,7 @@ std::vector<heap_chunk *> Gc::get_stack_reachable() {
     return stack_reachable;
 }
 
+// complexity O(n), where n is number of possible pointer data segments in heapchunk data block
 int Gc::mark_from_chunk(heap_chunk *chunk, std::vector<heap_chunk *> &reach_able) {
     unsigned int seg_size = sizeof(void *);
     uint64_t seg_count = chunk->size / seg_size;
@@ -64,8 +67,9 @@ int Gc::mark_from_chunk(heap_chunk *chunk, std::vector<heap_chunk *> &reach_able
     return 0;
 }
 
+// complexity O(n)*O(K), where K is average number of potential pointer data segments in each heap chunk data block
 int Gc::mark_phase() {
-    auto reachable = get_stack_reachable();
+    auto reachable = get_stack_reachable(); // O(n) call, n is heapchunk vector element count
 
     heap_chunk *chunk;
     size_t size;
@@ -74,7 +78,8 @@ int Gc::mark_phase() {
         reachable.pop_back();
 
         // mark(chunk);
-        mark_from_chunk(chunk, reachable);
+        mark_from_chunk(
+            chunk, reachable); // O(k) call, where k number of potential pointer data segments in the chunk data field
     }
 
     return 0;
@@ -103,44 +108,70 @@ int Gc::internal_allocate(char **stack_addr, size_t bytes) {
     return 0;
 }
 
-int Gc::sweep(){
+int Gc::man_free(char* heap_addr){
+    char** stck_ptr = &heap_addr;
+    
+    heap_chunk* chunk = reinterpret_cast<heap_chunk*>(heap_addr);
+    chunk--;
+    auto it = this->alloc_set.find(chunk);
+    assert(it != this->alloc_set.end());
+    if(it != this->alloc_set.end()){
+        for(auto i = this->alloc_vector.begin(); i < this->alloc_vector.end(); i++){
+            if(*i == *it){
+                this->alloc_vector.erase(i);
+                this->alloc_set.erase(it);
+                this->allocator.deallocate(reinterpret_cast<char**>(&chunk));
+                this->alloc_count--;
+                break;
+            }
+        }
+    }
+
+    return 0;
+}
+
+int Gc::sweep() {
 
     auto it = this->alloc_vector.begin();
 
-    heap_chunk* chunk;
-    while(it < this->alloc_vector.end()){
+    heap_chunk *chunk;
+    while (it < this->alloc_vector.end()) {
         chunk = *it;
 
-        if(!this->is_marked(chunk)){
+        if (!this->is_marked(chunk)) {
             it = this->alloc_vector.erase(it);
-            this->allocator.deallocate(reinterpret_cast<char**>(&chunk));
+
+            auto sit = this->alloc_set.find(chunk);
+            if(sit != this->alloc_set.end()){
+                this->alloc_set.erase(sit);
+            }
+
+            this->allocator.deallocate(reinterpret_cast<char **>(&chunk));
             this->alloc_count--;
             continue;
-        } 
-
+        }
+        this->unmark(chunk);
         it++;
     }
 
     return 0;
 }
 
-
-
 Gc::Gc() : alloc_count(0) {}
 
-Gc::~Gc(){};
+Gc::~Gc() {};
 
-int Gc::gc_run() { 
-    if(mark_phase() != 0) return GC_MARKPHASE_FAIL;
-    if(sweep() != 0) return GC_SWEEP_FAIL; 
+int Gc::gc_run() {
+    if (mark_phase() != 0)
+        return GC_MARKPHASE_FAIL;
+    if (sweep() != 0)
+        return GC_SWEEP_FAIL;
 
     return 0;
 };
 
-
 /*___________________________________________________DEBUG METHODS___________________________________ */
 
-
 #ifdef DEBUG
-    std::vector<heap_chunk *> Gc::getAllocVector() { return this->alloc_vector; }
+std::vector<heap_chunk *> Gc::getAllocVector() { return this->alloc_vector; }
 #endif

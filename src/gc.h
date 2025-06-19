@@ -9,9 +9,9 @@
 
 #define FLAG_MARK_BIT_INDEX 0
 
-#ifndef DEBUG
-#define DEBUG
-#endif
+//#ifndef DEBUG
+//#define DEBUG
+//#endif
 
 enum err_codes {
     ALLOCATION_FAIL = 1,
@@ -50,6 +50,7 @@ class Gc {
     
 
     void mark(heap_chunk *chnk);
+    void unmark(heap_chunk *chnk);
     int is_marked(heap_chunk *chnk);
     heap_chunk *data_to_heap_chunk_addr(char *data_addr);
     bool is_stack_reachable(heap_chunk *chnk);
@@ -58,6 +59,7 @@ class Gc {
     int mark_phase();
     int internal_allocate(char **stack_addr, size_t bytes);
     int sweep();
+    int man_free(char* heap_addr);
 
   public:
     uint32_t alloc_count;
@@ -68,12 +70,27 @@ class Gc {
         return internal_allocate(reinterpret_cast<char **>(stack_addr), sizeof(U) * elem_cnt);
     };
 
+    template <typename U> void manual_free(U *heap_addr){
+        man_free(reinterpret_cast<char*>(heap_addr));
+    };
+
     int gc_run();
 
     #ifdef DEBUG
     std::vector<heap_chunk *> getAllocVector();
     #endif
 };
+
+
+#define GC_ALLOCATE(gc, ptr, elem_cnt) (gc)->gc_allocate(&ptr, elem_cnt)
+
+#define GC_FULL_ALLOCATE(gc, type, expr, elem_cnt) \
+    type* expr;\
+    gc->gc_allocate(&expr, elem_cnt); \
+
+#define GC_MAN_FREE(gc, ptr) (gc)->manual_free(ptr);
+
+#define GC_RUN(gc) (gc)->gc_run();
 
 
 

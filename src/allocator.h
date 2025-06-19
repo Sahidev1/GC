@@ -58,6 +58,7 @@ class Allocator {
         if (*alloc_ptr == NULL)
             return DEALLOCING_NULL_POINTER;
         free(*alloc_ptr);
+        *alloc_ptr = NULL;
         return 0;
     }
 };

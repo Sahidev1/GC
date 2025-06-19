@@ -1,6 +1,7 @@
 
 #include "../src/gc.h"
 #include <iostream>
+#include <cstring>
 
 using namespace std;
 
@@ -10,13 +11,14 @@ struct test_struct {
 };
 
 
-void assign(Gc* gc, test_struct &test, const char* name, long int val){
+void assign(Gc* gc, test_struct &test, const char* name,long int val){
     test.value = val;
     
-    char* ptr;
-    gc->gc_allocate(&ptr, sizeof(name)/sizeof(const char));
+    
 
-    for(int i = 0; i < sizeof(name)/sizeof(const char); i++){
+    GC_FULL_ALLOCATE(gc, char, ptr, strlen(name));
+
+    for(int i = 0; i < strlen(name); i++){
         ptr[i] = name[i];
     }
 
@@ -53,10 +55,11 @@ int main(){
     const int ELEM_CNT = 10;
     test_struct* s0;
 
-    gc.gc_allocate(&s0, ELEM_CNT);
-    
+    //gc.gc_allocate(&s0, ELEM_CNT);
+    GC_ALLOCATE(&gc, s0, ELEM_CNT);
+
     assign(&gc, s0[3 % ELEM_CNT], "cool", 23);
-    assign(&gc, s0[7 % ELEM_CNT], "technocolor", 2282);
+    assign(&gc, s0[7 % ELEM_CNT], "technocolor doop", 2282);
 
     cout << "alloc count: " << gc.alloc_count << "\n";
 
@@ -80,7 +83,10 @@ int main(){
 
     iterate(gc);
 
+    GC_MAN_FREE(&gc, s0);
 
+    cout << "POST MANUAL FREE\n";
+    iterate(gc);
 
     #endif
 
