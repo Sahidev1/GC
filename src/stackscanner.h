@@ -1,0 +1,77 @@
+#ifndef STACKSCANNER_H
+#define STACKSCANNER_H
+
+#ifndef DEBUG
+#define DEBUG
+#endif
+
+#ifdef DEBUG
+#include <iostream> 
+#define DEBUG_CHECK() do{\
+    std::cout << "\nDebug check " << __COUNTER__ << " ,at function: " << __func__  << ", at line: " << __LINE__ <<" passed\n";\
+}while(0);\
+
+#define DEBUG_CHECK_LAST() do{DEBUG_CHECK(); exit(0);} while(0);
+
+#endif
+
+
+#define POSIX_CHECK() (defined(__unix__) || defined(__unix) || defined(unix) || defined(__APPLE__) \
+|| defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) \
+|| defined(__sun))\
+
+#define WINDOWS_CHECK() (defined(_WIN32) || defined(_WIN64))
+
+#include <cassert>
+
+#define DEBUG_ASSERT(arg) assert(arg)
+#define DEBUG_RETCODE(code) (DEBUG_ASSERT(code == 0))
+
+#if POSIX_CHECK()
+    #include <pthread.h>
+    #define USING_PTHREADS
+#elif WINDOWS_CHECK()
+    #error "No support for windows thread API's, only POSIX support"
+#else 
+    #error "Operating system does not support POSIX threads"
+#endif
+
+#include <cstdint>
+
+#define VOID_PTR_ADD(ptr, val) (\
+    (void*) (static_cast<char*>(ptr) + ((val)*sizeof(void*)))\
+)\
+
+
+/**
+ * size_t index: internal index keept by scanner
+ * bool at_end: flag wheter scanner reached end of stack
+ * curr: current 8 byte stack segment data, DO NOT CAST TO VOID* AND ACCESS IT UNLESS 100% IT IS A VALID POINTER!
+ */
+struct Scanner{
+    size_t index;
+    bool at_end;
+    intptr_t curr;
+};
+
+class Stackscanner {
+  private:
+    void* stack_addr;
+    size_t stack_size;
+    pthread_attr_t *attr;
+    void init(pthread_t thread_id);
+
+  public:
+    Stackscanner(/* args */);
+    Stackscanner(pthread_t thread_id);
+    ~Stackscanner();
+    Scanner *createScanner();
+    void scanNext(Scanner &scanner);
+    size_t getStackSize();
+
+    #ifdef DEBUG
+    void* getStackAddr();
+    #endif
+};
+
+#endif

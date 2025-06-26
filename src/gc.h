@@ -9,9 +9,9 @@
 
 #define FLAG_MARK_BIT_INDEX 0
 
-//#ifndef DEBUG
-//#define DEBUG
-//#endif
+#ifndef DEBUG
+#define DEBUG
+#endif
 
 enum err_codes {
     ALLOCATION_FAIL = 1,
@@ -46,7 +46,8 @@ class Gc {
     std::vector<heap_chunk *> alloc_vector;
     std::unordered_set<heap_chunk *> alloc_set;
     Allocator<char> allocator;
-
+    void* stack_base;
+    size_t stack_size; 
     
 
     void mark(heap_chunk *chnk);
