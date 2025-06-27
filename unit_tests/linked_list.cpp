@@ -3,7 +3,10 @@
 #include <cassert>
 #include <iostream>
 
+
+
 using namespace std;
+using namespace GarbageCollector;
 
 template<typename T>
 struct node {

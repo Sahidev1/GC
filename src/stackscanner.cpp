@@ -3,22 +3,23 @@
 #include <iostream>
 
 using namespace std;
+using namespace MemoryScanner;
 
 /** create stack scanner thats scan current threads stackspace */
-Stackscanner::Stackscanner() {
+StackScanner::StackScanner() {
     pthread_t s = pthread_self();
     this->init(s);
     
 }
 
 /** create stack scanner for a thread */
-Stackscanner::Stackscanner(pthread_t thread_id){
+StackScanner::StackScanner(pthread_t thread_id){
     this->init(thread_id);
 }
 
-/** Creates a new initialized Scanner object */
-Scanner *Stackscanner::createScanner(){
-    Scanner *scanner = new Scanner();
+/** Creates a new initialized StackIterator object */
+StackIterator *StackScanner::createIterator(){
+    StackIterator *scanner = new StackIterator();
     scanner->curr = 0;
     scanner->index = 0;
     scanner->at_end = false;
@@ -26,7 +27,7 @@ Scanner *Stackscanner::createScanner(){
 }
 
 /** Moves scanner to next non zero 8 byte stack data segment */
-void Stackscanner::scanNext(Scanner &scanner){
+void StackScanner::scanNext(StackIterator &scanner){
     void* start = VOID_PTR_ADD(this->stack_addr, scanner.index);
     void* top = VOID_PTR_ADD(this->stack_addr, (this->stack_size/sizeof(void*)));
 
@@ -46,17 +47,17 @@ void Stackscanner::scanNext(Scanner &scanner){
 }
 
 /** size of stack in bytes */
-size_t Stackscanner::getStackSize() { return this->stack_size; }
+size_t StackScanner::getStackSize() { return this->stack_size; }
 
 #ifdef DEBUG
-    void *Stackscanner::getStackAddr() { return this->stack_addr; }
+    void *StackScanner::getStackAddr() { return this->stack_addr; }
 #endif
 
 /**
  * initialization based on target thread. 
  * gets thread thread attributes such as address and size. 
  */
-void Stackscanner::init(pthread_t thread_id) {
+void StackScanner::init(pthread_t thread_id) {
     int rc;
     pthread_attr_t *attr = new pthread_attr_t();
     //rc = pthread_attr_init(attr);
@@ -82,7 +83,7 @@ void Stackscanner::init(pthread_t thread_id) {
 
 
 
-Stackscanner::~Stackscanner() {
+StackScanner::~StackScanner() {
     pthread_attr_destroy(this->attr);
 }
 

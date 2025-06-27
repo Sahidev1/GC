@@ -1,5 +1,7 @@
 #include "gc.h"
 
+using namespace GarbageCollector;
+
 void Gc::mark(heap_chunk *chnk) { chnk->flags |= (0x1 << FLAG_MARK_BIT_INDEX); }
 void Gc::unmark(heap_chunk *chnk) { chnk->flags &= ~(0x1 << FLAG_MARK_BIT_INDEX); }
 
@@ -15,29 +17,33 @@ heap_chunk *Gc::data_to_heap_chunk_addr(char *data_addr) {
     return pot_chunk - 1;
 }
 
+/*
 bool Gc::is_stack_reachable(heap_chunk *chnk) {
 
     char *stack_ptr = (char *)*(chnk->stack_ptr);
     char *chunk_ptr = (char *)chnk;
 
     return stack_ptr - sizeof(heap_chunk) == chunk_ptr;
-}
+}*/
 
 // complexity time: O(n), memory; O(m)
 std::vector<heap_chunk *> Gc::get_stack_reachable() {
-    auto start = alloc_vector.begin();
-    auto end = alloc_vector.end();
+    using namespace MemoryScanner;
 
-    std::vector<heap_chunk *> stack_reachable;
+    std::unique_ptr<StackIterator> scanIt = std::make_unique<StackIterator>(this->stackScanner->createIterator());
+    std::vector<heap_chunk*> stack_reachable;
 
-    heap_chunk *chnk;
-    while (start < end) {
-        chnk = *start;
-        if (is_stack_reachable(chnk)) {
-            mark(chnk);
-            stack_reachable.push_back(chnk);
+    this->stackScanner->scanNext(*scanIt);
+
+    heap_chunk* pot_heap_addr;
+    while(!scanIt->at_end){
+        pot_heap_addr = data_to_heap_chunk_addr(reinterpret_cast<char*>(scanIt->curr));
+
+        if(this->alloc_set.find(pot_heap_addr) != this->alloc_set.end()){
+            stack_reachable.push_back(pot_heap_addr);
         }
-        start++;
+
+        this->stackScanner->scanNext(*scanIt);
     }
 
     return stack_reachable;
@@ -108,19 +114,19 @@ int Gc::internal_allocate(char **stack_addr, size_t bytes) {
     return 0;
 }
 
-int Gc::man_free(char* heap_addr){
-    char** stck_ptr = &heap_addr;
-    
-    heap_chunk* chunk = reinterpret_cast<heap_chunk*>(heap_addr);
+int Gc::man_free(char *heap_addr) {
+    char **stck_ptr = &heap_addr;
+
+    heap_chunk *chunk = reinterpret_cast<heap_chunk *>(heap_addr);
     chunk--;
     auto it = this->alloc_set.find(chunk);
     assert(it != this->alloc_set.end());
-    if(it != this->alloc_set.end()){
-        for(auto i = this->alloc_vector.begin(); i < this->alloc_vector.end(); i++){
-            if(*i == *it){
+    if (it != this->alloc_set.end()) {
+        for (auto i = this->alloc_vector.begin(); i < this->alloc_vector.end(); i++) {
+            if (*i == *it) {
                 this->alloc_vector.erase(i);
                 this->alloc_set.erase(it);
-                this->allocator.deallocate(reinterpret_cast<char**>(&chunk));
+                this->allocator.deallocate(reinterpret_cast<char **>(&chunk));
                 this->alloc_count--;
                 break;
             }
@@ -142,7 +148,7 @@ int Gc::sweep() {
             it = this->alloc_vector.erase(it);
 
             auto sit = this->alloc_set.find(chunk);
-            if(sit != this->alloc_set.end()){
+            if (sit != this->alloc_set.end()) {
                 this->alloc_set.erase(sit);
             }
 
@@ -157,7 +163,15 @@ int Gc::sweep() {
     return 0;
 }
 
-Gc::Gc() : alloc_count(0) {}
+Gc::Gc() {
+    this->alloc_count = 0;
+    this->stackScanner = std::make_unique<MemoryScanner::StackScanner>(new MemoryScanner::StackScanner());
+}
+
+Gc::Gc(pthread_t pthread_id){
+    this->alloc_count = 0;
+    this->stackScanner = std::make_unique<MemoryScanner::StackScanner>(new MemoryScanner::StackScanner(pthread_id));
+}
 
 Gc::~Gc() {};
 

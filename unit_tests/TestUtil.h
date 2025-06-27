@@ -24,10 +24,13 @@ inline config* const internal_config = &internal;
 
 #define SET_VERBOSE_FAIL() (internal_config->verbose_fail = true)
 #define DISABLE_VERBOSE_FAIL() (internal_config->verbose_fail = false)
+
 #define SET_VERBOSE_SUCCESS() (internal_config->verbose_success = true)
 #define DISABLE_VERBOSE_SUCCESS() (internal_config->verbose_success = false)
+
 #define ENABLE_FATAL_FAIL() (internal_config->fatal_fail = true)
 #define DISABLE_FATAL_FAIL() (internal_config->fatal_fail = false)
+
 #define SET_PROG_FAIL_CODE(arg) (internal_config->program_failcode = arg)
 
 #define CHECK_VERBOSE_FAIL() (internal_config->verbose_fail)

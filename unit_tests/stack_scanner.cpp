@@ -4,11 +4,13 @@
 #include <iostream>
 #include <memory>
 
-void Assert_non_null_scanner(Stackscanner *s) { TEST_ASSERTION(s != nullptr); }
+using namespace MemoryScanner;
 
-void Assert_stack_scanner_stack_addr_not_null(Stackscanner *s) { TEST_ASSERTION(s->getStackAddr() != nullptr); }
+void Assert_non_null_scanner(StackScanner *s) { TEST_ASSERTION(s != nullptr); }
 
-void Assert_stack_scanner_stack_addr_reasonable(Stackscanner *s) {
+void Assert_stack_scanner_stack_addr_not_null(StackScanner *s) { TEST_ASSERTION(s->getStackAddr() != nullptr); }
+
+void Assert_stack_scanner_stack_addr_reasonable(StackScanner *s) {
     int stack_var;
     void *stack_addr = s->getStackAddr(); // returns base of it
     size_t stack_size = s->getStackSize();
@@ -17,14 +19,14 @@ void Assert_stack_scanner_stack_addr_reasonable(Stackscanner *s) {
     TEST_ASSERTION(stack_var_addr >= stack_addr && stack_var_addr < stack_end);
 }
 
-void Assert_stack_scanner_created_scanner_not_null(Stackscanner *s) {
-    std::unique_ptr<Scanner> scanner = std::make_unique<Scanner>(*s->createScanner());
+void Assert_stack_scanner_created_scanner_not_null(StackScanner *s) {
+    std::unique_ptr<StackIterator> scanner = std::make_unique<StackIterator>(*s->createIterator());
 
     TEST_ASSERTION(s != nullptr);
 }
 
-void Assertions_for_stack_scanner_scanner(Stackscanner *s) {
-    std::unique_ptr<Scanner> scanner = std::make_unique<Scanner>(*s->createScanner());
+void Assertions_for_stack_scanner_scanner(StackScanner *s) {
+    std::unique_ptr<StackIterator> scanner = std::make_unique<StackIterator>(*s->createIterator());
 
 
 
@@ -65,7 +67,7 @@ int main() {
     SET_VERBOSE_SUCCESS();
     DISABLE_FATAL_FAIL();
 
-    Stackscanner *stackScanner = new Stackscanner();
+    StackScanner *stackScanner = new StackScanner();
 
     Assert_non_null_scanner(stackScanner);
     Assert_stack_scanner_stack_addr_not_null(stackScanner);
