@@ -25,40 +25,33 @@ template<typename T>
 class Allocator {
 
   public:
-    int allocate(T** alloc_ptr, size_t elems) {
-        ALLOC_REF_NULLCHECK(alloc_ptr);
-
-        *alloc_ptr = malloc(sizeof(T) * elems);
-        return PTR_NULLCHECK(*alloc_ptr);
+    T* allocate(size_t elems) {
+        T* alloc_ptr;
+        alloc_ptr = reinterpret_cast<T*>(malloc(sizeof(T) * elems));
+        return alloc_ptr;
     }
 
 
 
-    int callocate(T **alloc_ptr, size_t num_elems) {
-        ALLOC_REF_NULLCHECK(alloc_ptr);
-        
-        *alloc_ptr = (T*) calloc(num_elems, sizeof(T));
-        return PTR_NULLCHECK(*alloc_ptr);
+    T* callocate(size_t num_elems) {
+        T* alloc_ptr; 
+        alloc_ptr = (T*) calloc(num_elems, sizeof(T));
+        return alloc_ptr;
     }
 
-    int zero_alloc(T **alloc_ptr, size_t elems){
-        return callocate(alloc_ptr, elems);
+    T* zero_seg_alloc(size_t elems){
+        return callocate(elems);
     }
 
-    int reallocate(T **alloc_ptr, size_t new_nr_elems) {
-        ALLOC_REF_NULLCHECK(alloc_ptr);
-
-        *alloc_ptr = realloc(*alloc_ptr, sizeof(T) * new_nr_elems);
-        return PTR_NULLCHECK(*alloc_ptr);
+    T* reallocate(T *alloc_ptr, size_t new_nr_elems) {
+        alloc_ptr = (T*) realloc(alloc_ptr, sizeof(T) * new_nr_elems);
+        return alloc_ptr;
     }
 
-    int deallocate(T **alloc_ptr) {
-        ALLOC_REF_NULLCHECK(alloc_ptr);
-
-        if (*alloc_ptr == NULL)
+    int deallocate(T *alloc_ptr) {
+        if (alloc_ptr == NULL)
             return DEALLOCING_NULL_POINTER;
-        free(*alloc_ptr);
-        *alloc_ptr = NULL;
+        free(alloc_ptr);
         return 0;
     }
 };

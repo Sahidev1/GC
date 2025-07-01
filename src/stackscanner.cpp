@@ -18,8 +18,8 @@ StackScanner::StackScanner(pthread_t thread_id){
 }
 
 /** Creates a new initialized StackIterator object */
-StackIterator *StackScanner::createIterator(){
-    StackIterator *scanner = new StackIterator();
+std::unique_ptr<StackIterator> StackScanner::createIterator(){
+    unique_ptr<StackIterator> scanner = make_unique<StackIterator>();
     scanner->curr = 0;
     scanner->index = 0;
     scanner->at_end = false;
@@ -31,12 +31,15 @@ void StackScanner::scanNext(StackIterator &scanner){
     void* start = VOID_PTR_ADD(this->stack_addr, scanner.index);
     void* top = VOID_PTR_ADD(this->stack_addr, (this->stack_size/sizeof(void*)));
 
+    int hits = 0;
+    
 
     void* tmp;
     while(start < top){
         if ((tmp = *((void**) start)) != nullptr) {
             scanner.curr = reinterpret_cast<intptr_t>(tmp);
             scanner.index++;
+            hits++;
             return;
         }
         scanner.index++;

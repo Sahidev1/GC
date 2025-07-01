@@ -36,7 +36,7 @@ int main(){
     for (int i = 0; i < NODE_CNT; i++){
         assert(iterator != nullptr);
         iterator->data = 2*i;
-        assert(gc->gc_allocate(&tmp, 1) == 0);
+        assert(gc->allocate(&tmp, 1) == 0);
         assert(tmp != nullptr);
         iterator->next = tmp;
         iterator = iterator->next;
@@ -53,7 +53,7 @@ int main(){
     iterator->next = nullptr;
 
 
-    assert(gc->gc_run() == 0);
+    assert(gc->run() == 0);
     assert(gc->alloc_count < NODE_CNT);
     cout << gc->alloc_count << "\n";
 

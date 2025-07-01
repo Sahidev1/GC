@@ -29,7 +29,7 @@ int main() {
     goof *ptr;
 
     const unsigned int ELEM_CNT = 1000;
-    gc.gc_allocate(&ptr, ELEM_CNT);
+    gc.allocate(&ptr, ELEM_CNT);
 
     string s = "cool";
 
@@ -41,15 +41,15 @@ int main() {
 
     int* iptr0;
 
-    gc.gc_allocate(&iptr0, 10000);
+    gc.allocate(&iptr0, 10000);
 
     char* cptr;
     for(int i = 0; i < 4000; i++){
-        gc.gc_allocate(&cptr, 100);
+        gc.allocate(&cptr, 100);
     }
 
     node* root;
-    gc.gc_allocate(&root, 1);
+    gc.allocate(&root, 1);
     root->a = 11;
 
 
@@ -57,13 +57,13 @@ int main() {
     node* tmp;
 
     for(int i = 0; i < 202439; i++){
-        gc.gc_allocate(&tmp,1);
+        gc.allocate(&tmp,1);
         traverse->next = tmp;
         traverse = traverse->next;
     }
 
 
-    println(gc.gc_run());
+    println(gc.run());
 
     return 0;
 }

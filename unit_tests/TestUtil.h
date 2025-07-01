@@ -36,28 +36,34 @@ inline config* const internal_config = &internal;
 #define CHECK_VERBOSE_FAIL() (internal_config->verbose_fail)
 #define CHECK_VERBOSE_SUCCESS() (internal_config->verbose_success)
 
-#define FAIL_MESSAGE(expr) "UNIT_TEST FAIL on " __DATE__ ", " __TIME__ " in file: " __FILE__ "\n\t-->in function: " << __func__ << ", at line: " << __LINE__ << "\n\t-->on assertion: " << expr << "\n"
+#define FAIL_MESSAGE(expr, name) "UNIT_TEST FAIL  on " __DATE__ ", " __TIME__ " in file: " __FILE__ "\n\t-->in function: " << __func__ << ", at line: " << __LINE__ << "\n\t-->on assertion: " << expr << "\n"
 
-#define SUCCESS_MESSAGE() "TEST PASSED: " << __func__ << "------> line: " << __LINE__
+#define SUCCESS_MESSAGE(name) "TEST [" name "] PASSED: " << __func__ << "------> line: " << __LINE__
 
-#define ON_FAIL(expr) do { \
-    if (CHECK_VERBOSE_FAIL()) PRINTLN(FAIL_MESSAGE(expr)); \
+#define ON_FAIL(expr, name) do { \
+    if (CHECK_VERBOSE_FAIL()) PRINTLN(FAIL_MESSAGE(expr,name)); \
 } while (0)
 
-#define ON_SUCCESS() do { \
-    if (CHECK_VERBOSE_SUCCESS()) PRINTLN(SUCCESS_MESSAGE()); \
+#define ON_SUCCESS(name) do { \
+    if (CHECK_VERBOSE_SUCCESS()) PRINTLN(SUCCESS_MESSAGE(name)); \
 } while (0)
 
-#define TEST_ASSERTION(assertion) do { \
+#define TEST_NAMED_ASSERTION(assertion, name) do { \
     internal_config->tests++;\
     if (assertion) { \
-        ON_SUCCESS(); \
+        ON_SUCCESS(name); \
     } else { \
         internal_config->fails++;\
-        ON_FAIL(#assertion); \
+        ON_FAIL(#assertion, name); \
         if(internal_config->fatal_fail) assert(assertion);\
     } \
 } while (0)
+
+#define TEST_ASSERTION(assertion) TEST_NAMED_ASSERTION(assertion,)
+
+
+
+
 
 #define TEST_SUMMARIZE() do {\
     PRINTLN("\nUNIT TEST file: " << __FILE__ << ", date: " << __DATE__ << ", time: " << __TIME__ << ", Results: ");\

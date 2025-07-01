@@ -19,7 +19,7 @@
 enum err_codes { ALLOCATION_FAIL = 1, GC_MARKPHASE_FAIL, GC_SWEEP_FAIL };
 
 struct heap_chunk {
-    char **stack_ptr;
+    //char **stack_ptr;
     size_t size;
     uint32_t flags;
 };
@@ -49,7 +49,7 @@ class Gc {
     void mark(heap_chunk *chnk);
     void unmark(heap_chunk *chnk);
     int is_marked(heap_chunk *chnk);
-    heap_chunk *data_to_heap_chunk_addr(char *data_addr);
+    heap_chunk *data_to_heap_chunk_addr(uintptr_t stack_data_seg);
     std::vector<heap_chunk *> get_stack_reachable();
     int mark_from_chunk(heap_chunk *chunk, std::vector<heap_chunk *> &reach_able);
     int mark_phase();
@@ -63,16 +63,21 @@ class Gc {
     Gc();
     Gc(pthread_t pthread_id);
     virtual ~Gc();
-    template <typename U> int gc_allocate(U **stack_addr, unsigned long elem_cnt) {
-        return internal_allocate(reinterpret_cast<char **>(stack_addr), sizeof(U) * elem_cnt);
+    template <typename U> U* allocate(unsigned long elem_cnt) {
+        U* ptr;
+        internal_allocate(reinterpret_cast<char **>(&ptr), sizeof(U) * elem_cnt);
+        return ptr;
     };
 
-    template <typename U> void manual_free(U *heap_addr) { man_free(reinterpret_cast<char *>(heap_addr)); };
+    template <typename U> void manual_free(U *heap_addr) {
+         man_free(reinterpret_cast<char *>(heap_addr));
+    };
 
-    int gc_run();
+    int run();
 
 #ifdef DEBUG
     std::vector<heap_chunk *> getAllocVector();
+    void stack_dump();
 #endif
 };
 
@@ -82,7 +87,7 @@ class Gc {
 
 #define GC_FULL_ALLOCATE(gc, type, expr, elem_cnt)                                                                     \
     type *expr;                                                                                                        \
-    gc->gc_allocate(&expr, elem_cnt);
+    gc->allocate(&expr, elem_cnt);
 
 #define GC_MAN_FREE(gc, ptr) (gc)->manual_free(ptr);
 

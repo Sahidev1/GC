@@ -42,6 +42,7 @@
 #endif
 
 #include <cstdint>
+#include <memory>
 
 #define VOID_PTR_ADD(ptr, val) ((void *)(static_cast<char *>(ptr) + ((val) * sizeof(void *))))
 
@@ -56,7 +57,7 @@ namespace MemoryScanner {
 struct StackIterator {
     size_t index;
     bool at_end;
-    intptr_t curr;
+    uintptr_t curr;
 };
 
 class StackScanner {
@@ -70,7 +71,7 @@ class StackScanner {
     StackScanner(/* args */);
     StackScanner(pthread_t thread_id);
     ~StackScanner();
-    StackIterator *createIterator();
+    std::unique_ptr<StackIterator> createIterator();
     void scanNext(StackIterator &scanner);
     size_t getStackSize();
 

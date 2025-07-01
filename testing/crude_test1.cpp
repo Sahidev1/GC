@@ -77,7 +77,7 @@ int main(){
 
     iterate(gc);
 
-    gc.gc_run();
+    gc.run();
 
     cout << "POST GC_RUN\n";
 
