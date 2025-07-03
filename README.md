@@ -20,4 +20,4 @@ A mark-and-sweep garbage collector implementation in C++.
 2. **Comprehensive testing** - Expand test coverage beyond basic functionality
 
 ## Development Status
-Currently debugging the core GC algorithm. The foundation components (allocator and stack scanner) are stable and ready for use.
+Currently debugging the core GC algorithm. The foundation components (allocator and stack scanner) are stable. 
