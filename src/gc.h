@@ -63,10 +63,8 @@ class Gc {
     Gc();
     Gc(pthread_t pthread_id);
     virtual ~Gc();
-    template <typename U> U* allocate(unsigned long elem_cnt) {
-        U* ptr;
-        internal_allocate(reinterpret_cast<char **>(&ptr), sizeof(U) * elem_cnt);
-        return ptr;
+    template <typename U> int allocate(U** ptr_stack_addr, unsigned long elem_cnt) {
+        return internal_allocate(reinterpret_cast<char **>(ptr_stack_addr), sizeof(U) * elem_cnt);
     };
 
     template <typename U> void manual_free(U *heap_addr) {

@@ -1,4 +1,5 @@
 #include "stackscanner.h"
+#include "../debug_tools/debugger.h"
 
 #include <iostream>
 
@@ -18,8 +19,9 @@ StackScanner::StackScanner(pthread_t thread_id){
 }
 
 /** Creates a new initialized StackIterator object */
-std::unique_ptr<StackIterator> StackScanner::createIterator(){
+std::unique_ptr<StackIterator> StackScanner::createIterator(void* stack_ref){
     unique_ptr<StackIterator> scanner = make_unique<StackIterator>();
+    scanner->stack_ref = stack_ref;
     scanner->curr = 0;
     scanner->index = 0;
     scanner->at_end = false;
@@ -28,10 +30,14 @@ std::unique_ptr<StackIterator> StackScanner::createIterator(){
 
 /** Moves scanner to next non zero 8 byte stack data segment */
 void StackScanner::scanNext(StackIterator &scanner){
-    void* start = VOID_PTR_ADD(this->stack_addr, scanner.index);
-    void* top = VOID_PTR_ADD(this->stack_addr, (this->stack_size/sizeof(void*)));
+    void* top = (void*)(((void**) this->stack_addr) + (this->stack_size/sizeof(void*)));
+    //void* start = VOID_PTR_ADD(this->stack_addr, scanner.index);
+    void* start = VOID_PTR_ADD(scanner.stack_ref, scanner.index);
+
 
     int hits = 0;
+
+    
     
 
     void* tmp;
@@ -81,6 +87,8 @@ void StackScanner::init(pthread_t thread_id) {
     this->stack_addr = stackaddr;
     this->stack_size = stacksize;
     this->attr = attr;
+
+    DEBUGGER_PRNTLN("\nstack base: " << stack_addr << ", top: " << VOID_PTR_ADD(stack_addr, (stack_size/sizeof(void*))) << ", size: " << stack_size <<"\n"); 
 
 }
 

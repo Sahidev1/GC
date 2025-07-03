@@ -1,4 +1,7 @@
 #include "gc.h"
+#include "../debug_tools/debugger.h"
+
+
 
 using namespace GarbageCollector;
 
@@ -30,10 +33,18 @@ bool Gc::is_stack_reachable(heap_chunk *chnk) {
 std::vector<heap_chunk *> Gc::get_stack_reachable() {
     using namespace MemoryScanner;
 
-    std::unique_ptr<MemoryScanner::StackIterator> scanIt = this->stackScanner->createIterator();
+    uintptr_t scan_ref;
+    std::unique_ptr<MemoryScanner::StackIterator> scanIt = this->stackScanner->createIterator(&scan_ref);
     std::vector<heap_chunk*> stack_reachable;
 
+    void* scan_start = &scan_ref;
+    void* scan_end = (void*)(((void**) this->stackScanner->getStackAddr()) + (this->stackScanner->getStackSize()/sizeof(void*)));
+
+    DEBUGGER_PRNTLN("starting at: " << scan_start << ", ending at: " << scan_end );
+
     this->stackScanner->scanNext(*scanIt);
+
+
 
     heap_chunk* pot_heap_addr;
     while(!scanIt->at_end){
@@ -78,6 +89,11 @@ int Gc::mark_phase() {
     auto reachable = get_stack_reachable(); // O(n) call, n is heapchunk vector element count
     size_t sizae = reachable.size();
 
+    DEBUGGER_PRNTLN("reache able size: " << sizae);
+    DEBUGGER_PRNTLN("alloc vect size: " << this->alloc_vector.size());
+    DEBUGGER_PRNTLN("size: " << this->alloc_set.size());
+
+
     heap_chunk *chunk;
     size_t size;
     while ((size = reachable.size()) > 0) {
@@ -114,6 +130,7 @@ int Gc::internal_allocate(char **stack_addr, size_t bytes) {
 
     this->alloc_vector.push_back(chnk);
     this->alloc_set.insert(chnk);
+    chnk = nullptr;
 
     return 0;
 }
@@ -155,7 +172,7 @@ int Gc::sweep() {
                 this->alloc_set.erase(sit);
             }
 
-            this->allocator.deallocate(reinterpret_cast<char*>(chunk));
+            assert(this->allocator.deallocate(reinterpret_cast<char*>(chunk)) == 0);
             this->alloc_count--;
             continue;
         }

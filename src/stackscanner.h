@@ -55,6 +55,7 @@ namespace MemoryScanner {
  * curr: current 8 byte stack segment data, DO NOT CAST TO VOID* AND ACCESS IT UNLESS 100% IT IS A VALID POINTER!
  */
 struct StackIterator {
+    void* stack_ref;
     size_t index;
     bool at_end;
     uintptr_t curr;
@@ -71,7 +72,7 @@ class StackScanner {
     StackScanner(/* args */);
     StackScanner(pthread_t thread_id);
     ~StackScanner();
-    std::unique_ptr<StackIterator> createIterator();
+    std::unique_ptr<StackIterator> createIterator(void* stack_ref);
     void scanNext(StackIterator &scanner);
     size_t getStackSize();
 
