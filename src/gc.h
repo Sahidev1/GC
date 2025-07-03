@@ -10,7 +10,7 @@
 #include <memory>
 
 #define FLAG_MARK_BIT_INDEX 0
-
+#define FLAG_SOFT_DEALLOC_BIT_INDEX 1
 
 #ifndef DEBUG
 #define DEBUG
@@ -48,6 +48,8 @@ class Gc {
 
     void mark(heap_chunk *chnk);
     void unmark(heap_chunk *chnk);
+    void set_soft_dealloc_flag(heap_chunk *chnk);
+    void clear_soft_dealloc_flag(heap_chunk *chnk);
     int is_marked(heap_chunk *chnk);
     heap_chunk *data_to_heap_chunk_addr(uintptr_t stack_data_seg);
     std::vector<heap_chunk *> get_stack_reachable();
@@ -55,7 +57,7 @@ class Gc {
     int mark_phase();
     int internal_allocate(char **stack_addr, size_t bytes);
     int sweep();
-    int man_free(char *heap_addr);
+    int man_hard_free(char *heap_addr);
 
   public:
     uint32_t alloc_count;
@@ -67,8 +69,10 @@ class Gc {
         return internal_allocate(reinterpret_cast<char **>(ptr_stack_addr), sizeof(U) * elem_cnt);
     };
 
+    
+
     template <typename U> void manual_free(U *heap_addr) {
-         man_free(reinterpret_cast<char *>(heap_addr));
+         man_hard_free(reinterpret_cast<char *>(heap_addr));
     };
 
     int run();

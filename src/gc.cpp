@@ -5,8 +5,14 @@
 
 using namespace GarbageCollector;
 
+#define SET_BIT_INDEX(val, bit_index) (val |= (0x1 << bit_index))
+#define CLEAR_BIT_INDEX(val, bit_index) (val &= ~(0x1 << bit_index))
+
 void Gc::mark(heap_chunk *chnk) { chnk->flags |= (0x1 << FLAG_MARK_BIT_INDEX); }
 void Gc::unmark(heap_chunk *chnk) { chnk->flags &= ~(0x1 << FLAG_MARK_BIT_INDEX); }
+
+void Gc::set_soft_dealloc_flag(heap_chunk *chnk) {SET_BIT_INDEX(chnk->flags, FLAG_SOFT_DEALLOC_BIT_INDEX);}
+void Gc::clear_soft_dealloc_flag(heap_chunk *chnk) {CLEAR_BIT_INDEX(chnk->flags, FLAG_SOFT_DEALLOC_BIT_INDEX);}
 
 int Gc::is_marked(heap_chunk *chnk) { return (chnk->flags >> FLAG_MARK_BIT_INDEX) & 0x1; }
 
@@ -40,17 +46,14 @@ std::vector<heap_chunk *> Gc::get_stack_reachable() {
     void* scan_start = &scan_ref;
     void* scan_end = (void*)(((void**) this->stackScanner->getStackAddr()) + (this->stackScanner->getStackSize()/sizeof(void*)));
 
-    DEBUGGER_PRNTLN("starting at: " << scan_start << ", ending at: " << scan_end );
-
     this->stackScanner->scanNext(*scanIt);
-
-
 
     heap_chunk* pot_heap_addr;
     while(!scanIt->at_end){
         pot_heap_addr = data_to_heap_chunk_addr(scanIt->curr);
 
         if(this->alloc_set.find(pot_heap_addr) != this->alloc_set.end()){
+            mark(pot_heap_addr);
             stack_reachable.push_back(pot_heap_addr);
         }
 
@@ -69,7 +72,7 @@ int Gc::mark_from_chunk(heap_chunk *chunk, std::vector<heap_chunk *> &reach_able
 
     heap_chunk *pot_heap_chunk;
     while (seg < last_seg_sentinel) {
-        pot_heap_chunk = data_to_heap_chunk_addr((intptr_t)seg);
+        pot_heap_chunk = data_to_heap_chunk_addr((uintptr_t)*seg);
         seg += seg_size;
         if (pot_heap_chunk == nullptr)
             continue;
@@ -88,11 +91,6 @@ int Gc::mark_from_chunk(heap_chunk *chunk, std::vector<heap_chunk *> &reach_able
 int Gc::mark_phase() {
     auto reachable = get_stack_reachable(); // O(n) call, n is heapchunk vector element count
     size_t sizae = reachable.size();
-
-    DEBUGGER_PRNTLN("reache able size: " << sizae);
-    DEBUGGER_PRNTLN("alloc vect size: " << this->alloc_vector.size());
-    DEBUGGER_PRNTLN("size: " << this->alloc_set.size());
-
 
     heap_chunk *chunk;
     size_t size;
@@ -135,11 +133,13 @@ int Gc::internal_allocate(char **stack_addr, size_t bytes) {
     return 0;
 }
 
-int Gc::man_free(char *heap_addr) {
+
+
+int Gc::man_hard_free(char *heap_addr) {
     heap_chunk *chunk = reinterpret_cast<heap_chunk *>(heap_addr);
     chunk--;
     auto it = this->alloc_set.find(chunk);
-    assert(it != this->alloc_set.end());
+
     if (it != this->alloc_set.end()) {
         for (auto i = this->alloc_vector.begin(); i < this->alloc_vector.end(); i++) {
             if (*i == *it) {
@@ -193,7 +193,16 @@ Gc::Gc(pthread_t pthread_id){
     this->stackScanner = std::make_unique<MemoryScanner::StackScanner>(pthread_id);
 }
 
-Gc::~Gc() {};
+Gc::~Gc() {
+    heap_chunk* tmp;
+    for(auto it = this->alloc_vector.begin(); it < this->alloc_vector.end(); ){
+        tmp = *it;
+        this->alloc_set.erase(tmp);
+        it = this->alloc_vector.erase(it);
+        this->allocator.deallocate(reinterpret_cast<char*>(tmp));
+    }
+
+};
 
 int Gc::run() {
     if (mark_phase() != 0)

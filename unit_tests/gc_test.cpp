@@ -4,8 +4,19 @@
 
 using namespace GarbageCollector;
 
+struct test_data {
+    unsigned int code;
+    char name[10];
+};
+
+struct node {
+    node* next;
+    int data;
+};
+
 void assert_non_null_gc_instance(Gc* gc){
     TEST_ASSERTION(gc != nullptr);
+    
 }
 
 void assert_immediate_alloc_dealloc_gc_run_consistent(Gc &gc){
@@ -18,18 +29,44 @@ void assert_immediate_alloc_dealloc_gc_run_consistent(Gc &gc){
 
 }
 
-struct test_data {
-    unsigned int code;
-    char name[10];
-};
+void assert_can_handle_cyclical_refs(){
+    Gc *gc = new Gc();
 
+    int k = 0;
 
+    node* curr; gc->allocate<node>(&curr, 1);
+    node* root = curr;
 
+    curr->data = ++k; 
+    gc->allocate<node>(&curr->next, 1);
+    curr = curr->next;
+    curr->data = ++k;
 
-int main(){
+    gc->run();
+    TEST_NAMED_ASSERTION(gc->alloc_count == 2, "check alloc count");
+
+    gc->allocate<node>(&curr->next, 1);
+    node* prev = curr;
+    curr = curr->next;
+    curr->data = ++k;
+    curr->next = prev; prev = nullptr; 
+    root = nullptr;
+    TEST_NAMED_ASSERTION(gc->alloc_count == 3, "check alloc count");
     
-    SET_VERBOSE_SUCCESS();
-    SET_PROG_FAIL_CODE(1);
+
+
+    gc->run();
+    DEBUGGER_PRNTLN(gc->alloc_count);
+    TEST_NAMED_ASSERTION(gc->alloc_count == 2, "check alloc count after root is nulled");
+
+
+
+
+    delete gc;
+}
+
+
+int main_test(){
 
     Gc* gc = new Gc();
     assert_non_null_gc_instance(gc);
@@ -66,9 +103,25 @@ int main(){
 
 
     TEST_SUMMARIZE();
+    delete gc;
     
 
     return 0;
+}
+
+
+
+
+
+int main(){
+    
+    DISABLE_FATAL_FAIL();
+    SET_VERBOSE_SUCCESS();
+    SET_PROG_FAIL_CODE(1);
+
+    //assert_can_handle_cyclical_refs();
+
+    main_test();
 }
 
 

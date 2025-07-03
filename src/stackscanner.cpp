@@ -88,7 +88,7 @@ void StackScanner::init(pthread_t thread_id) {
     this->stack_size = stacksize;
     this->attr = attr;
 
-    DEBUGGER_PRNTLN("\nstack base: " << stack_addr << ", top: " << VOID_PTR_ADD(stack_addr, (stack_size/sizeof(void*))) << ", size: " << stack_size <<"\n"); 
+//    DEBUGGER_PRNTLN("\nstack base: " << stack_addr << ", top: " << VOID_PTR_ADD(stack_addr, (stack_size/sizeof(void*))) << ", size: " << stack_size <<"\n"); 
 
 }
 
