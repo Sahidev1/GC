@@ -119,7 +119,7 @@ int main(){
     SET_VERBOSE_SUCCESS();
     SET_PROG_FAIL_CODE(1);
 
-    //assert_can_handle_cyclical_refs();
+    assert_can_handle_cyclical_refs();
 
     main_test();
 }

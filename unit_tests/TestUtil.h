@@ -11,9 +11,10 @@ struct config {
     int tests;
     int fails;
     int program_failcode;
+    bool lastFailed;
 };
 
-inline config internal = {true, true, false, 0, 0, 1};
+inline config internal = {true, true, false, 0, 0, 1, false};
 inline config* const internal_config = &internal;
 
 #define NOTHING() do {} while (0)
@@ -40,11 +41,14 @@ inline config* const internal_config = &internal;
 
 #define SUCCESS_MESSAGE(name) "TEST [" name "] PASSED: " << __func__ << "------> line: " << __LINE__
 
+
 #define ON_FAIL(expr, name) do { \
+    internal_config->lastFailed = true;\
     if (CHECK_VERBOSE_FAIL()) PRINTLN(FAIL_MESSAGE(expr,name)); \
 } while (0)
 
 #define ON_SUCCESS(name) do { \
+    internal_config->lastFailed = false;\
     if (CHECK_VERBOSE_SUCCESS()) PRINTLN(SUCCESS_MESSAGE(name)); \
 } while (0)
 
@@ -61,7 +65,13 @@ inline config* const internal_config = &internal;
 
 #define TEST_ASSERTION(assertion) TEST_NAMED_ASSERTION(assertion,)
 
-
+#define IF_FAILED(expr) do {\
+    if(internal_config->lastFailed){\
+        PRINTLN("\n\tFAIL CONDITION PROCEDURE EXECUTED!\n");\
+        expr\
+        PRINTLN("\n\tFAIL CONDITION PROCEDURE FINISHED!\n");\
+    } \
+} while(0)\
 
 
 

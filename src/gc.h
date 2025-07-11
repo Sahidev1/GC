@@ -24,6 +24,8 @@ struct heap_chunk {
     uint32_t flags;
 };
 
+std::ostream& operator<<(std::ostream& os, const heap_chunk& h);
+
 #if INTPTR_MAX == INT64_MAX
 #define PTR_SIZE 8
 #elif INTPTR_MAX == INT32_MAX

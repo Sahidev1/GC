@@ -1,5 +1,6 @@
 #include "gc.h"
 #include "../debug_tools/debugger.h"
+#include <iomanip>
 
 
 
@@ -20,10 +21,14 @@ heap_chunk *Gc::data_to_heap_chunk_addr(uintptr_t stack_data_seg) {
     if (stack_data_seg == 0)
         return nullptr;
 
-    heap_chunk *pot_chunk =  reinterpret_cast<heap_chunk*>(stack_data_seg);
-    pot_chunk--;
+    DEBUGGER_PRNTLN(reinterpret_cast<void*>(stack_data_seg));
 
-    return pot_chunk;
+
+    heap_chunk *pot_chunk =  reinterpret_cast<heap_chunk*>(stack_data_seg);
+
+    DEBUGGER_PRNTLN(pot_chunk - 1);
+
+    return pot_chunk - 1;
 }
 
 /*
@@ -52,6 +57,7 @@ std::vector<heap_chunk *> Gc::get_stack_reachable() {
     while(!scanIt->at_end){
         pot_heap_addr = data_to_heap_chunk_addr(scanIt->curr);
 
+
         if(this->alloc_set.find(pot_heap_addr) != this->alloc_set.end()){
             mark(pot_heap_addr);
             stack_reachable.push_back(pot_heap_addr);
@@ -65,15 +71,20 @@ std::vector<heap_chunk *> Gc::get_stack_reachable() {
 
 // complexity O(n), where n is number of possible pointer data segments in heapchunk data block
 int Gc::mark_from_chunk(heap_chunk *chunk, std::vector<heap_chunk *> &reach_able) {
-    unsigned int seg_size = sizeof(void *);
-    uint64_t seg_count = chunk->size / seg_size;
-    char *seg = (char *)(chunk + 1);
-    char *last_seg_sentinel = seg + seg_count * seg_size;
+    size_t seg_size = sizeof(void *);
+    size_t seg_count = chunk->size / seg_size;
+    unsigned char *seg = reinterpret_cast<unsigned char*>(chunk) + sizeof(heap_chunk);
+    unsigned char *last_seg_sentinel = seg + seg_count * seg_size;
+
+    DEBUGGER_PRNTLN("seg: " << reinterpret_cast<void*>(seg));
 
     heap_chunk *pot_heap_chunk;
     while (seg < last_seg_sentinel) {
         pot_heap_chunk = data_to_heap_chunk_addr((uintptr_t)*seg);
-        seg += seg_size;
+        DEBUGGER_PRNTLN("reading at: " << reinterpret_cast<void*>(seg));
+        DEBUGGER_PRNTLN((reinterpret_cast<void*>(*seg)) << ", " << pot_heap_chunk);
+        seg += seg_size; //?
+        
         if (pot_heap_chunk == nullptr)
             continue;
 
@@ -96,6 +107,9 @@ int Gc::mark_phase() {
     size_t size;
     while ((size = reachable.size()) > 0) {
         chunk = reachable[size - 1];
+
+        DEBUGGER_PRNTLN(*chunk);
+
         reachable.pop_back();
         // mark(chunk);
         mark_from_chunk(
@@ -217,6 +231,32 @@ int Gc::run() {
 
 #ifdef DEBUG
 std::vector<heap_chunk *> Gc::getAllocVector() { return this->alloc_vector; }
+
+std::ostream& operator<<(std::ostream& os, const heap_chunk& h) {
+    std::ios::fmtflags f(os.flags());
+    char fill_char = os.fill();
+
+    os << "heap_chunk{\n\tflags= " << h.flags << "\n\tsize= " << h.size << "\n\t" << "DATA SECTION: " << "\n\t";
+
+    heap_chunk const* hptr = &h;
+    char const* ptr = reinterpret_cast<char const*>(hptr) + sizeof(heap_chunk);
+    
+    for (int i = 0; i < h.size; ++i) {
+        os << std::hex << std::setw(2) << std::setfill('0')
+           << (static_cast<unsigned int>(static_cast<unsigned char>(ptr[i])));
+
+        if ((i + 1) % sizeof(intptr_t) == 0)
+            os << "\n\t";
+        else
+            os << " ";
+    }
+
+    os.flags(f);
+    os.fill(fill_char);
+
+    os << "\n}" << std::endl;
+    return os;
+}
 
 //VERY DODGY DO NOT USE
 void Gc::stack_dump(){
