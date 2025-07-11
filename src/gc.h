@@ -44,8 +44,6 @@ class Gc {
     std::vector<heap_chunk *> alloc_vector;
     std::unordered_set<heap_chunk *> alloc_set;
     Allocator<char> allocator;
-    void *stack_base;
-    size_t stack_size;
     std::unique_ptr<MemoryScanner::StackScanner> stackScanner;
 
     void mark(heap_chunk *chnk);

@@ -96,6 +96,7 @@ void StackScanner::init(pthread_t thread_id) {
 
 StackScanner::~StackScanner() {
     pthread_attr_destroy(this->attr);
+    delete this->attr;
 }
 
 

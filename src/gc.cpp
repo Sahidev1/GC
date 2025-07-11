@@ -220,7 +220,7 @@ Gc::~Gc() {
         it = this->alloc_vector.erase(it);
         this->allocator.deallocate(reinterpret_cast<char*>(tmp));
     }
-
+    
 };
 
 int Gc::run() {
