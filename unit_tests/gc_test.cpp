@@ -72,6 +72,9 @@ void assert_can_handle_cyclical_refs(){
 int main_test(){
 
     Gc* gc = new Gc();
+
+    TEST_NAMED_ASSERTION(gc->run() == 0, "assert dry run works");
+
     assert_non_null_gc_instance(gc);
     const unsigned long ALLOC_ELEMS = (1<<16);
 
