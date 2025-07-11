@@ -59,6 +59,9 @@ void assert_can_handle_cyclical_refs(){
     DEBUGGER_PRNTLN(gc->alloc_count);
     TEST_NAMED_ASSERTION(gc->alloc_count == 2, "check alloc count after root is nulled");
 
+    curr = nullptr;
+    gc->run();
+    TEST_ASSERTION(gc->alloc_count == 0);
 
 
 

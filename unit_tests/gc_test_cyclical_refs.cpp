@@ -13,11 +13,11 @@ struct node {
 
 void singe_alloc_check(){
     Gc gc;
-
+    TEST_ASSERTION(gc.alloc_count == 0);
     node<int> *n;
     int retc = gc.allocate<node<int>>(&n,1);
     TEST_ASSERTION(retc == 0);
-
+    TEST_ASSERTION(gc.alloc_count == 1);
     n->data = 12;
 
     auto vect = gc.getAllocVector();
@@ -25,6 +25,15 @@ void singe_alloc_check(){
         DEBUGGER_PRNTLN(**it);
         it++;
     }
+
+    retc = gc.run();
+
+    TEST_ASSERTION(retc == 0);
+    TEST_ASSERTION(gc.alloc_count == 1);
+
+    n = nullptr;
+    retc = gc.run();
+    TEST_ASSERTION(retc == 0);
 }
 
 void cyclical_ref_test_2_refs() {
@@ -71,12 +80,22 @@ void cyclical_ref_test_2_refs() {
     TEST_ASSERTION(vect.size() == 2);
     IF_FAILED(DEBUGGER_PRNTLN(vect.size()));
 
+    n->next = nullptr;
+    gc.run();
+    TEST_ASSERTION(gc.alloc_count == 1);
+
+    n = nullptr;
+    gc.run();
+
+    TEST_ASSERTION(gc.alloc_count == 0);
+
 }
 
 int main(){
+
+    DEBUGGER_DISABLE();
     
-    DISABLE_VERBOSE_FAIL();
-    //SET_VERBOSE_SUCCESS();
+    SET_VERBOSE_SUCCESS();
     DISABLE_FATAL_FAIL();
     SET_PROG_FAIL_CODE(1);
 

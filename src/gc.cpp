@@ -4,6 +4,7 @@
 
 
 
+
 using namespace GarbageCollector;
 
 #define SET_BIT_INDEX(val, bit_index) (val |= (0x1 << bit_index))
@@ -21,12 +22,12 @@ heap_chunk *Gc::data_to_heap_chunk_addr(uintptr_t stack_data_seg) {
     if (stack_data_seg == 0)
         return nullptr;
 
-    DEBUGGER_PRNTLN(reinterpret_cast<void*>(stack_data_seg));
+    //DEBUGGER_PRNTLN(reinterpret_cast<void*>(stack_data_seg));
 
 
     heap_chunk *pot_chunk =  reinterpret_cast<heap_chunk*>(stack_data_seg);
 
-    DEBUGGER_PRNTLN(pot_chunk - 1);
+    //DEBUGGER_PRNTLN(pot_chunk - 1);
 
     return pot_chunk - 1;
 }
@@ -73,17 +74,21 @@ std::vector<heap_chunk *> Gc::get_stack_reachable() {
 int Gc::mark_from_chunk(heap_chunk *chunk, std::vector<heap_chunk *> &reach_able) {
     size_t seg_size = sizeof(void *);
     size_t seg_count = chunk->size / seg_size;
-    unsigned char *seg = reinterpret_cast<unsigned char*>(chunk) + sizeof(heap_chunk);
-    unsigned char *last_seg_sentinel = seg + seg_count * seg_size;
+    //unsigned char *seg = reinterpret_cast<unsigned char*>(chunk) + sizeof(heap_chunk);
+    //unsigned char *last_seg_sentinel = seg + seg_count * seg_size;
 
-    DEBUGGER_PRNTLN("seg: " << reinterpret_cast<void*>(seg));
+    void** seg = reinterpret_cast<void**>(chunk + 1);
+    void** last_seg_sentinel = seg + seg_count;
+
+
+    DEBUGGER_PRNTLN("seg: " << seg);
 
     heap_chunk *pot_heap_chunk;
     while (seg < last_seg_sentinel) {
-        pot_heap_chunk = data_to_heap_chunk_addr((uintptr_t)*seg);
-        DEBUGGER_PRNTLN("reading at: " << reinterpret_cast<void*>(seg));
-        DEBUGGER_PRNTLN((reinterpret_cast<void*>(*seg)) << ", " << pot_heap_chunk);
-        seg += seg_size; //?
+        pot_heap_chunk = reinterpret_cast<heap_chunk*>(*seg) - 1;
+        DEBUGGER_PRNTLN("reading at: " << seg);
+        DEBUGGER_PRNTLN(*seg << ", " << pot_heap_chunk);
+        seg = (void**) (reinterpret_cast<char*>(seg) + seg_size);
         
         if (pot_heap_chunk == nullptr)
             continue;
@@ -219,6 +224,7 @@ Gc::~Gc() {
 };
 
 int Gc::run() {
+    DEBUGGER_DISABLE();
     if (mark_phase() != 0)
         return GC_MARKPHASE_FAIL;
     if (sweep() != 0)
