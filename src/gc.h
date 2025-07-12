@@ -12,31 +12,34 @@
 #define FLAG_MARK_BIT_INDEX 0
 #define FLAG_SOFT_DEALLOC_BIT_INDEX 1
 
-#ifndef DEBUG
-#define DEBUG
-#endif
+//#ifndef DEBUG
+//#define DEBUG
+//#endif
+
+
+#ifdef DEBUG
+#include "../debug_tools/debugger.h"
+#include <iomanip>
+#endif 
 
 enum err_codes { ALLOCATION_FAIL = 1, GC_MARKPHASE_FAIL, GC_SWEEP_FAIL };
 
+
+//allocated heap chunk memory layout starting from the left as lowest memory address: [[struct heap_chunk]|[data segment]]
+//the heap chunk struct size field allows as to access data segment within allocated range. 
+/**
+ * Heap chunk struct.
+ * To access Data Segment go to mem addr: &chunk + sizeof(heap_chunk).
+ * Valid Data Segment Mem range for a chunk: [&chunk + sizeof(heap_chunk), &chunk + sizeof(heap_chunk) + size]
+ */
 struct heap_chunk {
-    //char **stack_ptr;
-    size_t size;
-    uint32_t flags;
+    size_t size;    /** Size of data segment of chunk in bytes */
+    uint32_t flags; /** Holds flag bits for the heapchunk such as mark status */
 };
 
+// defining << operator for heap_chunks
 std::ostream& operator<<(std::ostream& os, const heap_chunk& h);
 
-#if INTPTR_MAX == INT64_MAX
-#define PTR_SIZE 8
-#elif INTPTR_MAX == INT32_MAX
-#define PTR_SIZE 4
-#else
-#error "NON COMAPTIBLE POINTER SIZE"
-#endif
-
-// Forward declaration of heap_chunk and Allocator
-// struct heap_chunk;
-// template <typename T> class Allocator;
 
 namespace GarbageCollector {
 class Gc {
@@ -62,19 +65,37 @@ class Gc {
   public:
     uint32_t alloc_count;
 
+    /**
+     * Constructor for gc instance on current running thread
+     */
     Gc();
+    /**
+     * Constuctor for gc instance running on a specific pthread
+     */
     Gc(pthread_t pthread_id);
     virtual ~Gc();
-    template <typename U> int allocate(U** ptr_stack_addr, unsigned long elem_cnt) {
-        return internal_allocate(reinterpret_cast<char **>(ptr_stack_addr), sizeof(U) * elem_cnt);
+
+    /**
+     * Allocates memory for certain numbers of an element
+     * @tparam U Type of element to allocate for
+     * @param ptr_addr The address of the heap pointer to allocate memory to. 
+     * @param elem_cnt The number of elements to allocate for. 
+     */
+    template <typename U> int allocate(U** ptr_addr, unsigned long elem_cnt) {
+        return internal_allocate(reinterpret_cast<char **>(ptr_addr), sizeof(U) * elem_cnt);
     };
 
-    
-
-    template <typename U> void manual_free(U *heap_addr) {
+        
+    /**
+     * Hard frees a allocation, very expensive operation, not recommended. 
+     */
+    template <typename U> void hard_free(U *heap_addr) {
          man_hard_free(reinterpret_cast<char *>(heap_addr));
     };
 
+    /**
+     * Runs the garbage collector. 
+     */
     int run();
 
 #ifdef DEBUG
@@ -84,15 +105,5 @@ class Gc {
 };
 
 }; // namespace GarbageCollector
-
-#define GC_ALLOCATE(gc, ptr, elem_cnt) (gc)->gc_allocate(&ptr, elem_cnt)
-
-#define GC_FULL_ALLOCATE(gc, type, expr, elem_cnt)                                                                     \
-    type *expr;                                                                                                        \
-    gc->allocate(&expr, elem_cnt);
-
-#define GC_MAN_FREE(gc, ptr) (gc)->manual_free(ptr);
-
-#define GC_RUN(gc) (gc)->gc_run();
 
 #endif
