@@ -20,13 +20,15 @@ void Assert_stack_scanner_stack_addr_reasonable(StackScanner *s) {
 }
 
 void Assert_stack_scanner_created_scanner_not_null(StackScanner *s) {
-    std::unique_ptr<StackIterator> scanner = std::make_unique<StackIterator>(*s->createIterator());
+    long int ref;
+    std::unique_ptr<StackIterator> scanner = std::make_unique<StackIterator>(*s->createIterator(&ref));
 
     TEST_ASSERTION(s != nullptr);
 }
 
 void Assertions_for_stack_scanner_scanner(StackScanner *s) {
-    std::unique_ptr<StackIterator> scanner = std::make_unique<StackIterator>(*s->createIterator());
+    long int ref;
+    std::unique_ptr<StackIterator> scanner = std::make_unique<StackIterator>(*s->createIterator(&ref));
 
 
 
