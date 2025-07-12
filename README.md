@@ -14,10 +14,13 @@ A mark-and-sweep garbage collector implementation in C++.
 ## TODO (Priority Order)
 
 ### High Priority
-1. **Clean up** - Refactor, simplify... remove depracted files or tests...
+1. **Implement soft free** - Implement soft manual free functionaliy.
 
-### Medium Priority  
-2. **Comprehensive testing** - Expand test coverage beyond basic functionality
+
+### Medium Priority 
+2. **Implement smarter allocation** - Based on wheter allocation type is pointer or not, flag it on heapchunk. 
+3. **Comprehensive testing** - Expand test coverage beyond basic functionality
+
 
 ## Development Status
 
