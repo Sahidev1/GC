@@ -5,16 +5,10 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
-#include <cassert>
 
 enum Alloc_errors {
     DEALLOCING_NULL_POINTER = 1,
-    ALLOC_PTR_REF_IS_NULL
 };
-
-#define PTR_NULLCHECK(ptr) (ptr == nullptr)
-#define ALLOC_REF_NULLCHECK(ref) if ((ref) == nullptr) return ALLOC_PTR_REF_IS_NULL;
-
 
 
 /**
