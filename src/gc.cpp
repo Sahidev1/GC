@@ -149,7 +149,7 @@ int Gc::sweep() {
             if (sit != this->alloc_set.end()) {
                 this->alloc_set.erase(sit);
             }
-
+            this->allocator.deallocate(reinterpret_cast<char*>(chunk));
             this->alloc_count--;
             continue;
         }
