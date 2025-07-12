@@ -21,6 +21,10 @@ A mark-and-sweep garbage collector implementation in C++.
 2. **Implement smarter allocation** - Based on wheter allocation type is pointer or not, flag it on heapchunk. 
 3. **Comprehensive testing** - Expand test coverage beyond basic functionality
 
+### Low Priority
+4. **Optimize datastructures and their use**, focus on implementing functionality first, "We should forget about small efficiencies, say about 97% of the time: premature optimization is the root of all evil."
+5. **Optimize algorithms**, "We should forget about small efficiencies, say about 97% of the time: premature optimization is the root of all evil."
+
 
 ## Development Status
 
