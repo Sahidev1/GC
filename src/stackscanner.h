@@ -1,23 +1,15 @@
 #ifndef STACKSCANNER_H
 #define STACKSCANNER_H
 
-#ifndef DEBUG
-#define DEBUG
-#endif
+// #ifndef DEBUG
+// #define DEBUG
+// #endif
 
 #ifdef DEBUG
-#include <iostream>
-#define DEBUG_CHECK()                                                                                                  \
-    do {                                                                                                               \
-        std::cout << "\nDebug check " << __COUNTER__ << " ,at function: " << __func__ << ", at line: " << __LINE__     \
-                  << " passed\n";                                                                                      \
-    } while (0);
+// put debugging code here
 
-#define DEBUG_CHECK_LAST()                                                                                             \
-    do {                                                                                                               \
-        DEBUG_CHECK();                                                                                                 \
-        exit(0);                                                                                                       \
-    } while (0);
+#define DEBUG_ASSERT(arg) assert(arg)
+#define DEBUG_RETCODE(code) (DEBUG_ASSERT(code == 0))
 
 #endif
 
@@ -27,14 +19,11 @@
 
 #define WINDOWS_CHECK() (defined(_WIN32) || defined(_WIN64))
 
-#include <cassert>
-
-#define DEBUG_ASSERT(arg) assert(arg)
-#define DEBUG_RETCODE(code) (DEBUG_ASSERT(code == 0))
-
 #if POSIX_CHECK()
+
 #include <pthread.h>
 #define USING_PTHREADS
+
 #elif WINDOWS_CHECK()
 #error "No support for windows thread API's, only POSIX support"
 #else
@@ -46,8 +35,6 @@
 
 #define VOID_PTR_ADD(ptr, val) ((void *)(static_cast<char *>(ptr) + ((val) * sizeof(void *))))
 
-
-
 namespace MemoryScanner {
 /**
  * size_t index: internal index keept by scanner
@@ -55,7 +42,7 @@ namespace MemoryScanner {
  * curr: current 8 byte stack segment data, DO NOT CAST TO VOID* AND ACCESS IT UNLESS 100% IT IS A VALID POINTER!
  */
 struct StackIterator {
-    void* stack_ref;
+    void *stack_ref;
     size_t index;
     bool at_end;
     uintptr_t curr;
@@ -72,7 +59,7 @@ class StackScanner {
     StackScanner(/* args */);
     StackScanner(pthread_t thread_id);
     ~StackScanner();
-    std::unique_ptr<StackIterator> createIterator(void* stack_ref);
+    std::unique_ptr<StackIterator> createIterator(void *stack_ref);
     void scanNext(StackIterator &scanner);
     size_t getStackSize();
 

@@ -1,7 +1,4 @@
 #include "stackscanner.h"
-#include "../debug_tools/debugger.h"
-
-#include <iostream>
 
 using namespace std;
 using namespace MemoryScanner;
@@ -31,21 +28,13 @@ std::unique_ptr<StackIterator> StackScanner::createIterator(void* stack_ref){
 /** Moves scanner to next non zero 8 byte stack data segment */
 void StackScanner::scanNext(StackIterator &scanner){
     void* top = (void*)(((void**) this->stack_addr) + (this->stack_size/sizeof(void*)));
-    //void* start = VOID_PTR_ADD(this->stack_addr, scanner.index);
     void* start = VOID_PTR_ADD(scanner.stack_ref, scanner.index);
-
-
-    int hits = 0;
-
-    
-    
 
     void* tmp;
     while(start < top){
         if ((tmp = *((void**) start)) != nullptr) {
             scanner.curr = reinterpret_cast<intptr_t>(tmp);
             scanner.index++;
-            hits++;
             return;
         }
         scanner.index++;
@@ -68,28 +57,18 @@ size_t StackScanner::getStackSize() { return this->stack_size; }
  */
 void StackScanner::init(pthread_t thread_id) {
     int rc;
-    pthread_attr_t *attr = new pthread_attr_t();
-    //rc = pthread_attr_init(attr);
-   
+    pthread_attr_t *attr = new pthread_attr_t();   
 
     rc = pthread_getattr_np(thread_id, attr);
-    DEBUG_RETCODE(rc);
 
-    //DEBUG_CHECK();
     void *stackaddr;
     size_t stacksize;
-    //DEBUG_CHECK();
+
     rc = pthread_attr_getstack(attr, &stackaddr, &stacksize);
-    //DEBUG_CHECK();
-    DEBUG_RETCODE(rc);
-    
 
     this->stack_addr = stackaddr;
     this->stack_size = stacksize;
     this->attr = attr;
-
-//    DEBUGGER_PRNTLN("\nstack base: " << stack_addr << ", top: " << VOID_PTR_ADD(stack_addr, (stack_size/sizeof(void*))) << ", size: " << stack_size <<"\n"); 
-
 }
 
 
