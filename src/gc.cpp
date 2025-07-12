@@ -77,7 +77,6 @@ int Gc::mark_from_chunk(heap_chunk *chunk, std::vector<heap_chunk *> &reach_able
 // complexity O(n)*O(K), where K is average number of potential pointer data segments in each heap chunk data block
 int Gc::mark_phase() {
     auto reachable = get_stack_reachable(); // O(n) call, n is heapchunk vector element count
-    size_t sizae = reachable.size();
 
     heap_chunk *chunk;
     size_t size;
