@@ -9,12 +9,12 @@ A mark-and-sweep garbage collector implementation in C++.
 ### Completed
 - ✅ **Custom allocator** - Implementation complete and tested
 - ✅ **Stack scanner** - Implementation complete and tested  
-- ⚠️ **Garbage collector** - Implemented but contains bugs
+- ✅ **Garbage collector** - Implemented but has missing features and needs further testing. 
 
 ## TODO (Priority Order)
 
 ### High Priority
-1. **Fix cyclical reference bug** - The mark phase is not correctly marking cyclical references. Investigation needed in `mark_phase()` function.
+1. **Clean up** - Refactor, simplify... remove depracted files or tests...
 
 ### Medium Priority  
 2. **Comprehensive testing** - Expand test coverage beyond basic functionality
